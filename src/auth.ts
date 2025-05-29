@@ -1,6 +1,6 @@
 import { AuthOptions, getServerSession } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials";
-import { verifySignInMessage } from "@farcaster/frame-sdk";
+import { FrameRequest, getFrameMessage } from "@farcaster/frame-node";
 
 declare module "next-auth" {
   interface Session {
@@ -66,22 +66,37 @@ export const authOptions: AuthOptions = {
         const domain = getDomainFromUrl(process.env.NEXTAUTH_URL);
 
         try {
-          const verifyResponse = await verifySignInMessage({
-            message: credentials?.message as string,
-            signature: credentials?.signature as `0x${string}`,
-            domain,
-            nonce: csrfToken,
-          });
+          const frameRequest: FrameRequest = {
+            untrustedData: {
+              fid: 0, // This will be validated by getFrameMessage
+              url: `https://${domain}`,
+              messageHash: credentials?.message as string,
+              timestamp: Date.now(),
+              network: 1,
+              buttonIndex: 1,
+              inputText: '',
+              castId: {
+                fid: 0,
+                hash: '0x0'
+              }
+            },
+            trustedData: {
+              messageBytes: credentials?.signature as `0x${string}`
+            }
+          };
 
-          if (!verifyResponse.success) {
+          const frameMessage = await getFrameMessage(frameRequest);
+          
+          if (!frameMessage.valid) {
+            console.error('Invalid frame message:', frameMessage);
             return null;
           }
 
           return {
-            id: verifyResponse.fid.toString(),
+            id: frameMessage.fid.toString(),
           };
         } catch (error) {
-          console.error('Error verifying sign in message:', error);
+          console.error('Error verifying frame message:', error);
           return null;
         }
       },
