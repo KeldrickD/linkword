@@ -1,6 +1,5 @@
 import { AuthOptions, getServerSession } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials";
-import { FrameRequest, getFrameMessage } from "@farcaster/frame-node";
 
 declare module "next-auth" {
   interface Session {
@@ -26,7 +25,6 @@ function getDomainFromUrl(urlString: string | undefined): string {
 }
 
 export const authOptions: AuthOptions = {
-    // Configure one or more authentication providers
   providers: [
     CredentialsProvider({
       name: "Sign in with Farcaster",
@@ -41,10 +39,6 @@ export const authOptions: AuthOptions = {
           type: "text",
           placeholder: "0x0",
         },
-        // In a production app with a server, these should be fetched from
-        // your Farcaster data indexer rather than have them accepted as part
-        // of credentials.
-        // question: should these natively use the Neynar API?
         name: {
           label: "Name",
           type: "text",
@@ -66,34 +60,28 @@ export const authOptions: AuthOptions = {
         const domain = getDomainFromUrl(process.env.NEXTAUTH_URL);
 
         try {
-          const frameRequest: FrameRequest = {
-            untrustedData: {
-              fid: 0, // This will be validated by getFrameMessage
-              url: `https://${domain}`,
-              messageHash: credentials?.message as string,
-              timestamp: Date.now(),
-              network: 1,
-              buttonIndex: 1,
-              inputText: '',
-              castId: {
-                fid: 0,
-                hash: '0x0'
-              }
+          const response = await fetch('https://api.neynar.com/v2/farcaster/frame/validate', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'api_key': process.env.NEYNAR_API_KEY || '',
             },
-            trustedData: {
-              messageBytes: credentials?.signature as `0x${string}`
-            }
-          };
+            body: JSON.stringify({
+              message_bytes_in_hex: credentials?.signature,
+              message_hash: credentials?.message,
+              domain: domain,
+            }),
+          });
 
-          const frameMessage = await getFrameMessage(frameRequest);
+          const data = await response.json();
           
-          if (!frameMessage.valid) {
-            console.error('Invalid frame message:', frameMessage);
+          if (!data.valid) {
+            console.error('Invalid frame message:', data);
             return null;
           }
 
           return {
-            id: frameMessage.fid.toString(),
+            id: data.fid.toString(),
           };
         } catch (error) {
           console.error('Error verifying frame message:', error);
