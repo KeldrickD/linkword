@@ -1,0 +1,10 @@
+{
+  "name": "LinkWord Puzzle Win - 2025-06-04",
+  "description": "I solved today's LinkWord puzzle on Farcaster!",
+  "image": "https://linkword.vercel.app/images/2025-06-04.png",
+  "attributes": [
+    { "trait_type": "Puzzle ID", "value": "2025-06-04" },
+    { "trait_type": "Words", "value": ["coffee", "tea", "water", "juice"] },
+    { "trait_type": "Answer", "value": "drink" }
+  ]
+} 

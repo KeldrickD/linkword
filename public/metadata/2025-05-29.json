@@ -1,0 +1,10 @@
+{
+  "name": "LinkWord Puzzle Win - 2025-05-29",
+  "description": "I solved today's LinkWord puzzle on Farcaster!",
+  "image": "https://linkword.vercel.app/images/2025-05-29.png",
+  "attributes": [
+    { "trait_type": "Puzzle ID", "value": "2025-05-29" },
+    { "trait_type": "Words", "value": ["river", "money", "savings", "piggy"] },
+    { "trait_type": "Answer", "value": "bank" }
+  ]
+} 
