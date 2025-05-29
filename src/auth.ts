@@ -1,6 +1,6 @@
 import { AuthOptions, getServerSession } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials";
-import { createAppClient, viemConnector } from "@farcaster/auth-client";
+import { verifySignInMessage } from "@farcaster/frame-sdk";
 
 declare module "next-auth" {
   interface Session {
@@ -63,27 +63,27 @@ export const authOptions: AuthOptions = {
           return null;
         }
 
-        const appClient = createAppClient({
-          ethereum: viemConnector(),
-        });
-
         const domain = getDomainFromUrl(process.env.NEXTAUTH_URL);
 
-        const verifyResponse = await appClient.verifySignInMessage({
-          message: credentials?.message as string,
-          signature: credentials?.signature as `0x${string}`,
-          domain,
-          nonce: csrfToken,
-        });
-        const { success, fid } = verifyResponse;
+        try {
+          const verifyResponse = await verifySignInMessage({
+            message: credentials?.message as string,
+            signature: credentials?.signature as `0x${string}`,
+            domain,
+            nonce: csrfToken,
+          });
 
-        if (!success) {
+          if (!verifyResponse.success) {
+            return null;
+          }
+
+          return {
+            id: verifyResponse.fid.toString(),
+          };
+        } catch (error) {
+          console.error('Error verifying sign in message:', error);
           return null;
         }
-
-        return {
-          id: fid.toString(),
-        };
       },
     }),
   ],
