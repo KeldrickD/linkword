@@ -1,6 +1,14 @@
 import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";
-import { getNeynarUser } from "../../../lib/neynar";
+
+// Mock implementation of getNeynarUser
+async function getNeynarUser(fid: number) {
+  return {
+    display_name: "Test User",
+    username: "testuser",
+    pfp_url: "https://warpcast.com/~/channel-images/test.png"
+  };
+}
 
 export const dynamic = 'force-dynamic';
 

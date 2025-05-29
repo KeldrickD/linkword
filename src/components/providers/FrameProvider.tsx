@@ -44,7 +44,7 @@ export function FrameProvider({ children }: { children: ReactNode }) {
         console.log('Initializing Frame SDK...');
         
         // Wait for the SDK to be ready
-        await sdk.ready;
+        await sdk.actions.ready();
         console.log('Frame SDK ready');
         
         // Get the context
@@ -69,21 +69,11 @@ export function FrameProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    const handleContextUpdate = (ctx: Context.FrameContext) => {
-      console.log('Frame context updated:', ctx);
-      if (isMounted) {
-        setContext(ctx);
-        setIsConnected(!!ctx?.user?.fid);
-      }
-    };
-
     sdk.on("frameAdded", handleFrameAdded);
-    sdk.on("contextUpdate", handleContextUpdate);
 
     return () => {
       isMounted = false;
       sdk.off("frameAdded", handleFrameAdded);
-      sdk.off("contextUpdate", handleContextUpdate);
     };
   }, [addNotification]);
 

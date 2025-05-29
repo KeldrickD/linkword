@@ -36,13 +36,13 @@ import { PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
 export default function Demo(
   { title }: { title?: string } = { title: "Frames v2 Demo" }
 ) {
-  const { isSDKLoaded, context, added, notificationDetails, lastEvent, addFrame, addFrameResult, openUrl, close } = useFrame();
+  const { isSDKLoaded, context, notifications, isConnected } = useFrame();
   const [isContextOpen, setIsContextOpen] = useState(false);
   const [txHash, setTxHash] = useState<string | null>(null);
   const [sendNotificationResult, setSendNotificationResult] = useState("");
   const [copied, setCopied] = useState(false);
 
-  const { address, isConnected } = useAccount();
+  const { address } = useAccount();
   const chainId = useChainId();
   const hasSolanaProvider = useHasSolanaProvider();
   let solanaWallet, solanaPublicKey, solanaSignMessage, solanaAddress;
@@ -109,7 +109,7 @@ export default function Demo(
 
   const sendNotification = useCallback(async () => {
     setSendNotificationResult("");
-    if (!notificationDetails || !context) {
+    if (!notifications.length || !context) {
       return;
     }
 
@@ -120,7 +120,7 @@ export default function Demo(
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           fid: context.user.fid,
-          notificationDetails,
+          notificationDetails: notifications[0],
         }),
       });
 
@@ -137,7 +137,7 @@ export default function Demo(
     } catch (error) {
       setSendNotificationResult(`Error: ${error}`);
     }
-  }, [context, notificationDetails]);
+  }, [context, notifications]);
 
   const sendTx = useCallback(() => {
     sendTransaction(
@@ -197,248 +197,97 @@ export default function Demo(
             onClick={toggleContext}
             className="flex items-center gap-2 transition-colors"
           >
-            <span
-              className={`transform transition-transform ${
-                isContextOpen ? "rotate-90" : ""
-              }`}
-            >
-              ➤
-            </span>
-            Tap to expand
+            <span>Toggle Context</span>
           </button>
-
           {isContextOpen && (
-            <div className="p-4 mt-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
-              <pre className="font-mono text-xs whitespace-pre-wrap break-words max-w-[260px] overflow-x-">
-                {JSON.stringify(context, null, 2)}
-              </pre>
-            </div>
+            <pre className="mt-2 p-2 bg-gray-100 rounded overflow-auto">
+              {JSON.stringify(context, null, 2)}
+            </pre>
           )}
         </div>
 
-        <div>
-          <h2 className="font-2xl font-bold">Actions</h2>
-
-          <div className="mb-4">
-            <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg my-2">
-              <pre className="font-mono text-xs whitespace-pre-wrap break-words max-w-[260px] overflow-x-">
-                sdk.actions.signIn
-              </pre>
-            </div>
-            <SignIn />
-          </div>
-
-          <div className="mb-4">
-            <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg my-2">
-              <pre className="font-mono text-xs whitespace-pre-wrap break-words max-w-[260px] overflow-x-">
-                sdk.actions.openUrl
-              </pre>
-            </div>
-            <Button onClick={() => openUrl("https://www.youtube.com/watch?v=dQw4w9WgXcQ")}>Open Link</Button>
-          </div>
-
-          <div className="mb-4">
-            <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg my-2">
-              <pre className="font-mono text-xs whitespace-pre-wrap break-words max-w-[260px] overflow-x-">
-                sdk.actions.viewProfile
-              </pre>
-            </div>
-            <ViewProfile />
-          </div>
-
-          <div className="mb-4">
-            <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg my-2">
-              <pre className="font-mono text-xs whitespace-pre-wrap break-words max-w-[260px] overflow-x-">
-                sdk.actions.close
-              </pre>
-            </div>
-            <Button onClick={close}>Close Frame</Button>
+        <div className="mb-4">
+          <h2 className="font-2xl font-bold">Notifications</h2>
+          <div className="mt-2">
+            {notifications.map((notification) => (
+              <div key={notification.token} className="p-2 bg-gray-100 rounded mb-2">
+                <p>URL: {notification.url}</p>
+                <p>Token: {notification.token}</p>
+              </div>
+            ))}
           </div>
         </div>
 
         <div className="mb-4">
-          <h2 className="font-2xl font-bold">Last event</h2>
-
-          <div className="p-4 mt-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
-            <pre className="font-mono text-xs whitespace-pre-wrap break-words max-w-[260px] overflow-x-">
-              {lastEvent || "none"}
-            </pre>
-          </div>
-        </div>
-
-        <div>
-          <h2 className="font-2xl font-bold">Add to client & notifications</h2>
-
-          <div className="mt-2 mb-4 text-sm">
-            Client fid {context?.client.clientFid},
-            {added ? " frame added to client," : " frame not added to client,"}
-            {notificationDetails
-              ? " notifications enabled"
-              : " notifications disabled"}
-          </div>
-
-          <div className="mb-4">
-            <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg my-2">
-              <pre className="font-mono text-xs whitespace-pre-wrap break-words max-w-[260px] overflow-x-">
-                sdk.actions.addFrame
-              </pre>
-            </div>
-            {addFrameResult && (
-              <div className="mb-2 text-sm">
-                Add frame result: {addFrameResult}
-              </div>
-            )}
-            <Button onClick={addFrame} disabled={added}>
-              Add frame to client
-            </Button>
-          </div>
-
+          <h2 className="font-2xl font-bold">Send Notification</h2>
+          <button
+            onClick={sendNotification}
+            className="w-full p-2 bg-blue-500 text-white rounded"
+            disabled={!notifications.length}
+          >
+            Send Notification
+          </button>
           {sendNotificationResult && (
-            <div className="mb-2 text-sm">
-              Send notification result: {sendNotificationResult}
-            </div>
-          )}
-          <div className="mb-4">
-            <Button onClick={sendNotification} disabled={!notificationDetails}>
-              Send notification
-            </Button>
-          </div>
-
-          <div className="mb-4">
-            <Button 
-              onClick={async () => {
-                if (context?.user?.fid) {
-                  const shareUrl = `${process.env.NEXT_PUBLIC_URL}/share/${context.user.fid}`;
-                  await navigator.clipboard.writeText(shareUrl);
-                  setCopied(true);
-                  setTimeout(() => setCopied(false), 2000);
-                }
-              }}
-              disabled={!context?.user?.fid}
-            >
-              {copied ? "Copied!" : "Copy share URL"}
-            </Button>
-          </div>
-        </div>
-
-        <div>
-          <h2 className="font-2xl font-bold">Wallet</h2>
-
-          {address && (
-            <div className="my-2 text-xs">
-              Address: <pre className="inline">{truncateAddress(address)}</pre>
-            </div>
-          )}
-
-          {chainId && (
-            <div className="my-2 text-xs">
-              Chain ID: <pre className="inline">{chainId}</pre>
-            </div>
-          )}
-
-          <div className="mb-4">
-            {isConnected ? (
-              <Button
-                onClick={() => disconnect()}
-                className="w-full"
-              >
-                Disconnect
-              </Button>
-            ) : context ? (
-              /* if context is not null, mini app is running in frame client */
-              <Button
-                onClick={() => connect({ connector: connectors[0] })}
-                className="w-full"
-              >
-                Connect
-              </Button>
-            ) : (
-              /* if context is null, mini app is running in browser */
-              <div className="space-y-2">
-                <Button
-                  onClick={() => connect({ connector: connectors[1] })}
-                  className="w-full"
-                >
-                  Connect Coinbase Wallet
-                </Button>
-                <Button
-                  onClick={() => connect({ connector: connectors[2] })}
-                  className="w-full"
-                >
-                  Connect MetaMask
-                </Button>
-              </div>
-            )}
-          </div>
-
-          <div className="mb-4">
-            <SignEvmMessage />
-          </div>
-
-          {isConnected && (
-            <>
-              <div className="mb-4">
-                <SendEth />
-              </div>
-              <div className="mb-4">
-                <Button
-                  onClick={sendTx}
-                  disabled={!isConnected || isSendTxPending}
-                  isLoading={isSendTxPending}
-                >
-                  Send Transaction (contract)
-                </Button>
-                {isSendTxError && renderError(sendTxError)}
-                {txHash && (
-                  <div className="mt-2 text-xs">
-                    <div>Hash: {truncateAddress(txHash)}</div>
-                    <div>
-                      Status:{" "}
-                      {isConfirming
-                        ? "Confirming..."
-                        : isConfirmed
-                        ? "Confirmed!"
-                        : "Pending"}
-                    </div>
-                  </div>
-                )}
-              </div>
-              <div className="mb-4">
-                <Button
-                  onClick={signTyped}
-                  disabled={!isConnected || isSignTypedPending}
-                  isLoading={isSignTypedPending}
-                >
-                  Sign Typed Data
-                </Button>
-                {isSignTypedError && renderError(signTypedError)}
-              </div>
-              <div className="mb-4">
-                <Button
-                  onClick={handleSwitchChain}
-                  disabled={isSwitchChainPending}
-                  isLoading={isSwitchChainPending}
-                >
-                  Switch to {nextChain.name}
-                </Button>
-                {isSwitchChainError && renderError(switchChainError)}
-              </div>
-            </>
+            <p className="mt-2 text-sm">{sendNotificationResult}</p>
           )}
         </div>
 
-        {solanaAddress && (
-          <div>
-            <h2 className="font-2xl font-bold">Solana</h2>
-            <div className="my-2 text-xs">
-              Address: <pre className="inline">{truncateAddress(solanaAddress)}</pre>
-            </div>
-            <SignSolanaMessage signMessage={solanaSignMessage} />
-            <div className="mb-4">
-              <SendSolana />
-            </div>
-          </div>
-        )}
+        <div className="mb-4">
+          <h2 className="font-2xl font-bold">Send Transaction</h2>
+          <button
+            onClick={sendTx}
+            className="w-full p-2 bg-blue-500 text-white rounded"
+            disabled={isSendTxPending}
+          >
+            {isSendTxPending ? "Sending..." : "Send Transaction"}
+          </button>
+          {txHash && (
+            <p className="mt-2 text-sm">
+              Transaction Hash: {truncateAddress(txHash)}
+            </p>
+          )}
+          {isConfirming && <p className="mt-2 text-sm">Confirming...</p>}
+          {isConfirmed && <p className="mt-2 text-sm">Confirmed!</p>}
+          {isSendTxError && (
+            <p className="mt-2 text-sm text-red-500">
+              Error: {sendTxError?.message}
+            </p>
+          )}
+        </div>
+
+        <div className="mb-4">
+          <h2 className="font-2xl font-bold">Sign Typed Data</h2>
+          <button
+            onClick={signTyped}
+            className="w-full p-2 bg-blue-500 text-white rounded"
+            disabled={isSignTypedPending}
+          >
+            {isSignTypedPending ? "Signing..." : "Sign Typed Data"}
+          </button>
+          {isSignTypedError && (
+            <p className="mt-2 text-sm text-red-500">
+              Error: {signTypedError?.message}
+            </p>
+          )}
+        </div>
+
+        <div className="mb-4">
+          <h2 className="font-2xl font-bold">Switch Chain</h2>
+          <button
+            onClick={handleSwitchChain}
+            className="w-full p-2 bg-blue-500 text-white rounded"
+            disabled={isSwitchChainPending}
+          >
+            {isSwitchChainPending
+              ? "Switching..."
+              : `Switch to ${nextChain.name}`}
+          </button>
+          {isSwitchChainError && (
+            <p className="mt-2 text-sm text-red-500">
+              Error: {switchChainError?.message}
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );

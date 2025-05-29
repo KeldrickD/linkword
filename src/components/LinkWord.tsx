@@ -4,6 +4,7 @@ import { useFrame } from '../components/providers/FrameProvider';
 import { purchaseUnit } from '../lib/payments';
 import { mintWinNft } from '../lib/nft';
 import { Input } from './ui/input';
+import sdk from '@farcaster/frame-sdk';
 
 const FREE_HINTS = 1;
 const FREE_PLAYS = 0;   // no extra puzzles by default
@@ -203,8 +204,9 @@ export default function LinkWord() {
   // Share for free play
   const shareForPlay = async () => {
     try {
-      await frame.context?.cast.post({ 
-        text: `I just solved today's #LinkWord puzzle! Can you beat me?` 
+      // Use the SDK to compose a cast
+      await sdk.actions.composeCast({
+        text: `I just solved today's #LinkWord puzzle! Can you beat me?`
       });
       setPlaysLeft(playsLeft + 1);
       setHasShared(true);

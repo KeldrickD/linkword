@@ -1,41 +1,6 @@
-import { NeynarAPIClient, Configuration, WebhookUserCreated } from '@neynar/nodejs-sdk';
-import { APP_URL } from './constants';
-
-let neynarClient: NeynarAPIClient | null = null;
-
-// Example usage:
-// const client = getNeynarClient();
-// const user = await client.lookupUserByFid(fid); 
-export function getNeynarClient() {
-  if (!neynarClient) {
-    const apiKey = process.env.NEYNAR_API_KEY;
-    if (!apiKey) {
-      throw new Error('NEYNAR_API_KEY not configured');
-    }
-    const config = new Configuration({ apiKey });
-    neynarClient = new NeynarAPIClient(config);
-  }
-  return neynarClient;
-}
-
-type User = WebhookUserCreated['data'];
-
-export async function getNeynarUser(fid: number): Promise<User | null> {
-  try {
-    const client = getNeynarClient();
-    const usersResponse = await client.fetchBulkUsers({ fids: [fid] });
-    return usersResponse.users[0];
-  } catch (error) {
-    console.error('Error getting Neynar user:', error);
-    return null;
-  }
-}
-
+// Mock implementation without Neynar SDK
 type SendFrameNotificationResult =
-  | {
-      state: "error";
-      error: unknown;
-    }
+  | { state: "error"; error: unknown }
   | { state: "no_token" }
   | { state: "rate_limit" }
   | { state: "success" };
@@ -49,28 +14,16 @@ export async function sendNeynarFrameNotification({
   title: string;
   body: string;
 }): Promise<SendFrameNotificationResult> {
-  try {
-    const client = getNeynarClient();
-    const targetFids = [fid];
-    const notification = {
-      title,
-      body,
-      target_url: APP_URL,
-    };
+  console.log('Mock Neynar frame notification:', { fid, title, body });
+  return { state: "success" };
+}
 
-    const result = await client.publishFrameNotifications({ 
-      targetFids, 
-      notification 
-    });
+export async function sendNotification(fid: number, message: string) {
+  console.log(`Would send notification to FID ${fid}: ${message}`);
+  return { success: true };
+}
 
-    if (result.notification_deliveries.length > 0) {
-      return { state: "success" };
-    } else if (result.notification_deliveries.length === 0) {
-      return { state: "no_token" };
-    } else {
-      return { state: "error", error: result || "Unknown error" };
-    }
-  } catch (error) {
-    return { state: "error", error };
-  }
+export async function validateFrameMessage(messageBytes: string) {
+  console.log('Would validate frame message:', messageBytes);
+  return { valid: true, fid: 123 }; // Placeholder implementation
 } 
